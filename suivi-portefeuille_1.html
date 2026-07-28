@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi de portefeuille — Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e9edf1;
+    --card:#ffffff;
+    --ink:#14202b;
+    --muted:#5c6773;
+    --faint:#8894a1;
+    --pine:#1e5945;
+    --steel:#35688f;
+    --amber:#b0741a;
+    --slate:#6b7785;
+    --clay:#9c463b;
+    --line:#d5dbe1;
+    --line-soft:#e5e9ee;
+    --shadow:0 1px 2px rgba(20,32,43,.06),0 8px 24px rgba(20,32,43,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 6rem;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 1.25rem}
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:linear-gradient(160deg,#16232f 0%,#1d3242 55%,#1e4a3d 140%);
+    color:#eef2f0;
+    padding:3.4rem 0 2.6rem;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    color:#8fbfae;margin-bottom:1rem;
+  }
+  header h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(2.1rem,5vw,3.2rem);line-height:1.05;
+    letter-spacing:-.01em;margin-bottom:1rem;
+  }
+  header h1 em{font-style:italic;color:#a9d4c4}
+  .lede{color:#c3cdd3;max-width:52ch;font-size:1.02rem}
+  .header-meta{
+    display:flex;flex-wrap:wrap;gap:1.6rem;margin-top:2rem;
+    font-family:'JetBrains Mono',monospace;font-size:.8rem;
+  }
+  .header-meta div{color:#9fb0ba}
+  .header-meta strong{display:block;color:#eef2f0;font-size:1.35rem;font-weight:500;margin-top:.15rem}
+  .header-meta .accent strong{color:#a9d4c4}
+
+  /* ---------- SECTIONS ---------- */
+  section{margin-top:3.2rem}
+  .sec-head{display:flex;align-items:baseline;gap:.9rem;margin-bottom:1.3rem;flex-wrap:wrap}
+  .sec-num{
+    font-family:'JetBrains Mono',monospace;font-size:.8rem;
+    color:var(--faint);letter-spacing:.1em;padding-top:.35rem;
+  }
+  h2{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(1.5rem,3.4vw,2rem);letter-spacing:-.01em;
+  }
+  .sec-sub{color:var(--muted);max-width:60ch;margin-top:.2rem;font-size:.96rem}
+
+  /* ---------- LEGEND / FILTERS ---------- */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.4rem;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:.5rem;
+    background:var(--card);border:1px solid var(--line);
+    border-radius:100px;padding:.4rem .85rem;font-size:.82rem;
+    cursor:pointer;transition:all .15s ease;color:var(--muted);
+    font-weight:500;
+  }
+  .chip:hover{border-color:var(--faint)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .dot.pilier{background:var(--pine)}
+  .dot.sat{background:var(--steel)}
+  .dot.pari{background:var(--amber)}
+  .dot.etf{background:var(--slate)}
+
+  /* ---------- ENVELOPE GRID ---------- */
+  .env-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+  @media(max-width:760px){.env-grid{grid-template-columns:1fr}}
+  .env{
+    background:var(--card);border:1px solid var(--line-soft);
+    border-radius:14px;box-shadow:var(--shadow);overflow:hidden;
+  }
+  .env-title{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 1.15rem;border-bottom:1px solid var(--line-soft);
+    background:#fbfcfd;
+  }
+  .env-title h3{font-family:'JetBrains Mono',monospace;font-size:.9rem;letter-spacing:.08em;font-weight:500}
+  .env-title span{font-size:.74rem;color:var(--faint);font-family:'JetBrains Mono',monospace}
+  ul.lines{list-style:none}
+  li.line{
+    display:flex;align-items:flex-start;gap:.7rem;
+    padding:.7rem 1.15rem;border-bottom:1px solid var(--line-soft);
+    transition:background .12s;
+  }
+  li.line:last-child{border-bottom:none}
+  li.line:hover{background:#fafbfc}
+  li.line.hidden{display:none}
+  .marker{width:10px;height:10px;border-radius:50%;flex:none;margin-top:.42rem}
+  .marker.pilier{background:var(--pine)}
+  .marker.sat{background:var(--steel)}
+  .marker.pari{background:var(--amber)}
+  .marker.etf{background:var(--slate)}
+  .line-body{flex:1;min-width:0}
+  .line-name{font-weight:600;font-size:.94rem}
+  .line-name .held{
+    font-size:.62rem;font-weight:600;letter-spacing:.06em;
+    color:var(--pine);background:#e4f0eb;border-radius:4px;
+    padding:.05rem .35rem;margin-left:.4rem;vertical-align:middle;
+  }
+  .line-name .sell{color:var(--clay);background:#f6e4e2}
+  .line-case{font-size:.78rem;color:var(--faint);font-family:'JetBrains Mono',monospace;margin-top:.05rem}
+  .line-note{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+
+  /* ---------- STRATEGIES ---------- */
+  .strats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}
+  @media(max-width:820px){.strats{grid-template-columns:1fr}}
+  .strat{
+    background:var(--card);border:1px solid var(--line-soft);
+    border-radius:14px;padding:1.3rem;box-shadow:var(--shadow);
+    position:relative;display:flex;flex-direction:column;
+  }
+  .strat.reco{border:1.5px solid var(--pine)}
+  .strat .tag{
+    position:absolute;top:-11px;left:1.3rem;
+    background:var(--pine);color:#fff;font-size:.66rem;font-weight:600;
+    letter-spacing:.1em;text-transform:uppercase;padding:.2rem .6rem;border-radius:100px;
+  }
+  .strat h3{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:500;margin-bottom:.15rem}
+  .strat .kind{font-size:.78rem;color:var(--faint);font-family:'JetBrains Mono',monospace;margin-bottom:1rem}
+  .alloc{list-style:none;margin-bottom:1rem}
+  .alloc li{
+    display:flex;justify-content:space-between;gap:.6rem;
+    padding:.4rem 0;border-bottom:1px dashed var(--line-soft);font-size:.86rem;
+  }
+  .alloc li:last-child{border-bottom:none}
+  .alloc .lbl{color:var(--muted)}
+  .alloc .val{font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap}
+  .alloc li.cash .lbl{color:var(--amber);font-weight:600}
+  .alloc li.total{margin-top:.3rem;border-top:1.5px solid var(--line);border-bottom:none;padding-top:.5rem}
+  .alloc li.total .lbl{color:var(--ink);font-weight:600}
+  .strat .verdict{font-size:.82rem;color:var(--muted);margin-top:auto;padding-top:.4rem}
+  .strat .verdict b{color:var(--ink)}
+
+  /* ---------- QUEUE ---------- */
+  .queue{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .qrow{display:grid;grid-template-columns:120px 1fr;gap:1rem;padding:1rem 1.2rem;border-bottom:1px solid var(--line-soft)}
+  .qrow:last-child{border-bottom:none}
+  @media(max-width:620px){.qrow{grid-template-columns:1fr;gap:.35rem}}
+  .qmonth{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:.9rem;color:var(--pine)}
+  .qcash{font-size:.74rem;color:var(--faint);font-family:'JetBrains Mono',monospace;margin-top:.2rem}
+  .qbody .qtarget{font-weight:600;font-size:.92rem}
+  .qbody .qdesc{font-size:.85rem;color:var(--muted);margin-top:.2rem}
+  .qrow.boost{background:linear-gradient(90deg,#fbf7ef,#fff)}
+
+  /* ---------- TIMELINE ---------- */
+  .timeline{position:relative;margin-top:.5rem;padding-left:1.5rem}
+  .timeline::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .tl-item{position:relative;padding:0 0 1.35rem 1.3rem}
+  .tl-item::before{
+    content:"";position:absolute;left:-1.5rem;top:.35rem;
+    width:12px;height:12px;border-radius:50%;background:var(--card);
+    border:2.5px solid var(--steel);
+  }
+  .tl-item.sell::before{border-color:var(--clay)}
+  .tl-item.watch::before{border-color:var(--amber)}
+  .tl-date{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--steel);font-weight:500;letter-spacing:.04em}
+  .tl-item.sell .tl-date{color:var(--clay)}
+  .tl-item.watch .tl-date{color:var(--amber)}
+  .tl-title{font-weight:600;font-size:.94rem;margin-top:.1rem}
+  .tl-desc{font-size:.85rem;color:var(--muted);margin-top:.15rem}
+
+  /* ---------- RULES ---------- */
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}
+  @media(max-width:820px){.rules{grid-template-columns:1fr}}
+  .rule{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:1.3rem;box-shadow:var(--shadow)}
+  .rule .rn{font-family:'Fraunces',serif;font-size:2rem;color:var(--pine);line-height:1;font-weight:500}
+  .rule h3{font-size:.98rem;margin:.5rem 0 .4rem}
+  .rule p{font-size:.86rem;color:var(--muted)}
+
+  /* ---------- EXCLUDE ---------- */
+  .exclude{background:#f3eeed;border:1px solid #e6d9d7;border-radius:14px;padding:1.3rem 1.4rem}
+  .exclude h3{font-size:.9rem;color:var(--clay);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;margin-bottom:.6rem}
+  .exclude p{font-size:.88rem;color:#6f5a57;line-height:1.7}
+  .exclude .x{color:var(--clay);font-weight:600}
+
+  /* ---------- CALLOUT / DISCLAIMER ---------- */
+  .callout{
+    background:#eaf1ee;border-left:3px solid var(--pine);
+    border-radius:0 10px 10px 0;padding:1.1rem 1.3rem;margin-top:1.4rem;
+  }
+  .callout p{font-size:.88rem;color:#2c473d}
+  .disclaimer{margin-top:3.5rem;padding-top:1.4rem;border-top:1px solid var(--line);font-size:.78rem;color:var(--faint);max-width:70ch}
+
+  footer{margin-top:3rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--faint);letter-spacing:.05em}
+
+  /* ---------- SAFETY NET ---------- */
+  .netgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:1.25rem;align-items:start}
+  @media(max-width:760px){.netgrid{grid-template-columns:1fr}}
+  .progress-card{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:1.4rem;box-shadow:var(--shadow)}
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem}
+  .progress-top .now{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:500}
+  .progress-top .goal{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--faint)}
+  .bar{height:14px;background:#e7ebef;border-radius:100px;overflow:hidden;position:relative}
+  .bar-fill{height:100%;width:21.7%;background:linear-gradient(90deg,#1e5945,#2f7a5f);border-radius:100px}
+  .bar-gap{position:absolute;top:0;right:0;height:100%;width:78.3%;display:flex;align-items:center;justify-content:center}
+  .bar-labels{display:flex;justify-content:space-between;margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--faint)}
+  .net-detail{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:1.4rem;box-shadow:var(--shadow)}
+  .net-detail h3{font-size:.98rem;margin-bottom:.7rem}
+  .split{display:flex;gap:.6rem;margin-bottom:1rem}
+  .split-part{flex:1;text-align:center;padding:.8rem .5rem;border-radius:10px}
+  .split-part.a{background:#e4f0eb}
+  .split-part.b{background:#e7eef4}
+  .split-part .amt{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:1.15rem;display:block}
+  .split-part .who{font-size:.74rem;color:var(--muted);margin-top:.15rem}
+  .split-part.a .amt{color:var(--pine)}
+  .split-part.b .amt{color:var(--steel)}
+  .net-detail p{font-size:.86rem;color:var(--muted)}
+  .phase-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .55rem;border-radius:100px;margin-bottom:.6rem}
+  .phase-tag.p1{background:var(--pine);color:#fff}
+  .phase-tag.p2{background:#e7eef4;color:var(--steel)}
+
+  /* ---------- ACWI NOTE ---------- */
+  .acwi{background:var(--card);border:1px solid var(--line-soft);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .acwi-head{padding:1.1rem 1.4rem;border-bottom:1px solid var(--line-soft);background:#fbfcfd;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .acwi-head h3{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:500}
+  .verdict-pill{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:.25rem .7rem;border-radius:100px;background:#f6e4e2;color:var(--clay);font-weight:600}
+  .acwi-body{padding:1.3rem 1.4rem}
+  .acwi-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:.4rem}
+  @media(max-width:620px){.acwi-cols{grid-template-columns:1fr}}
+  .acwi-col h4{font-size:.82rem;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;margin-bottom:.5rem}
+  .acwi-col.pro h4{color:var(--pine)}
+  .acwi-col.con h4{color:var(--clay)}
+  .acwi-col p{font-size:.87rem;color:var(--muted)}
+
+  /* ---------- MEMO ---------- */
+  .memo{
+    background:#fdf9f2;border:1px solid #e8dcc6;
+    border-left:4px solid var(--amber);
+    border-radius:0 14px 14px 0;
+    padding:1.5rem 1.6rem;margin-top:2.4rem;
+    box-shadow:var(--shadow);
+  }
+  .memo-head{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin-bottom:.5rem}
+  .memo-head h2{font-size:1.4rem}
+  .memo-head .stop{
+    font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:#fff;background:var(--amber);
+    padding:.25rem .7rem;border-radius:100px;font-weight:600;
+  }
+  .memo>p.intro{font-size:.92rem;color:#6d5c3f;margin-bottom:1.2rem;max-width:64ch}
+  .checks{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+  @media(max-width:700px){.checks{grid-template-columns:1fr}}
+  .checks li{
+    display:flex;gap:.7rem;align-items:flex-start;
+    background:#fff;border:1px solid #eee2cd;border-radius:10px;
+    padding:.8rem .9rem;cursor:pointer;transition:all .15s;
+  }
+  .checks li:hover{border-color:var(--amber)}
+  .checks li.done{background:#f5f1e8;opacity:.55}
+  .checks li.done .q{text-decoration:line-through}
+  .box{
+    width:17px;height:17px;flex:none;margin-top:.12rem;
+    border:1.5px solid #c9b48c;border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.7rem;color:#fff;font-weight:700;
+  }
+  .checks li.done .box{background:var(--amber);border-color:var(--amber)}
+  .checks li.done .box::after{content:"✓"}
+  .q{font-size:.89rem;font-weight:600;color:var(--ink)}
+  .why{font-size:.8rem;color:#8a7757;margin-top:.2rem}
+  .memo-foot{
+    margin-top:1.2rem;padding-top:1rem;border-top:1px dashed #e0d0b0;
+    font-size:.88rem;color:#6d5c3f;
+  }
+  .memo-foot b{color:var(--clay)}
+  .reset-btn{
+    background:none;border:1px solid #d6c4a3;color:#8a7757;
+    font-family:'JetBrains Mono',monospace;font-size:.72rem;
+    padding:.35rem .8rem;border-radius:100px;cursor:pointer;margin-top:.9rem;
+    transition:all .15s;
+  }
+  .reset-btn:hover{background:#f0e7d6;color:var(--ink)}
+  .redflags{
+    margin-top:1.1rem;background:#f8ecea;border:1px solid #e8cfcb;
+    border-radius:10px;padding:.9rem 1.1rem;
+  }
+  .redflags h4{font-family:'JetBrains Mono',monospace;font-size:.74rem;letter-spacing:.08em;color:var(--clay);margin-bottom:.45rem}
+  .redflags p{font-size:.85rem;color:#7a5852;line-height:1.65}
+
+  /* ---------- EDITABLE ---------- */
+  .num-inline{
+    font-family:'Fraunces',serif;font-size:inherit;color:inherit;font-weight:500;
+    background:#fff8ec;border:1px solid #e8dcc6;border-radius:6px;
+    width:5.2ch;text-align:center;padding:.05rem .2rem;
+  }
+  #splitA,#splitB{width:3.6ch}
+  .num-inline:focus{outline:2px solid var(--amber);outline-offset:1px;background:#fff}
+  .solder-row{grid-template-columns:160px 1fr!important}
+  @media(max-width:620px){.solder-row{grid-template-columns:1fr!important}}
+  .solder-fields{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
+  .solder-fields label{display:flex;flex-direction:column;font-size:.68rem;color:var(--faint);font-family:'JetBrains Mono',monospace;letter-spacing:.03em;gap:.2rem;flex:1;min-width:120px}
+  .solder-fields label.wide{flex-basis:100%}
+  .fld{
+    font-family:'Inter',sans-serif;font-size:.84rem;color:var(--ink);font-weight:500;
+    background:#fbfcfd;border:1px solid var(--line);border-radius:7px;padding:.4rem .55rem;
+  }
+  .fld:focus{outline:2px solid var(--steel);outline-offset:1px;background:#fff}
+  .fld:not(:placeholder-shown){background:#fff;border-color:var(--steel)}
+  .editable-block{
+    outline:none;border-radius:8px;padding:.6rem .7rem;margin:-.6rem -.7rem;
+    transition:background .15s;cursor:text;
+  }
+  .editable-block:hover{background:#e4e9ef}
+  .editable-block:focus{background:#fff;box-shadow:0 0 0 2px var(--steel)}
+  .save-bar{
+    position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(4rem);
+    background:var(--ink);color:#fff;padding:.7rem 1.3rem;border-radius:100px;
+    font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.03em;
+    box-shadow:0 8px 30px rgba(20,32,43,.35);z-index:50;display:flex;align-items:center;gap:.8rem;
+    opacity:0;transition:all .25s ease;pointer-events:none;
+  }
+  .save-bar.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+  .save-bar button{
+    background:rgba(255,255,255,.15);border:none;color:#fff;font-family:inherit;font-size:.72rem;
+    padding:.3rem .7rem;border-radius:100px;cursor:pointer;transition:background .15s;
+  }
+  .save-bar button:hover{background:rgba(255,255,255,.28)}
+  .edit-hint{
+    display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;
+    font-size:.7rem;color:var(--amber);background:#fff8ec;border:1px solid #e8dcc6;
+    border-radius:100px;padding:.25rem .7rem;margin-top:.6rem;
+  }
+
+  .floating-save{
+    position:fixed;bottom:1.4rem;right:1.4rem;z-index:45;
+    background:var(--pine);color:#fff;border:none;border-radius:100px;
+    font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500;letter-spacing:.02em;
+    padding:.75rem 1.25rem;cursor:pointer;box-shadow:0 6px 22px rgba(30,89,69,.4);
+    transition:all .18s ease;
+  }
+  .floating-save:hover{background:#1a4d3c;transform:translateY(-2px);box-shadow:0 10px 28px rgba(30,89,69,.5)}
+  .floating-save:active{transform:translateY(0)}
+
+  @media print{
+    .floating-save,.save-bar,.edit-hint,.reset-btn,.chip{display:none!important}
+    header{background:#16232f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{background:#fff}
+    section{break-inside:avoid;page-break-inside:avoid}
+    .env,.strat,.rule,.queue,.progress-card,.net-detail,.acwi{box-shadow:none;border:1px solid #ccc}
+    .num-inline,.fld{border:1px solid #999;background:#fff!important}
+  }
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Cockpit d'investissement · révisé juillet 2026</div>
+    <h1>Un plan à trois étages,<br><em>piloté sans se disperser.</em></h1>
+    <p class="lede">De 45 lignes en désordre à <b>23 convictions</b> (12 PEA · 11 CTO) : une base qui porte, un champion par case, un filet qui sécurise. Voici le tableau de bord.</p>
+    <span class="edit-hint">✎ Filet, seuils, dates et réserve sont modifiables · sauvegarde auto + bouton « Exporter » pour garder une copie portable</span>
+    <div class="header-meta">
+      <div>Épargne mensuelle<strong>600 €</strong></div>
+      <div>Enveloppes<strong>PEA · CTO</strong></div>
+      <div class="accent">Conviction n°1<strong>Microsoft</strong></div>
+      <div>Contrainte PEA<strong>action entière</strong></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== MÉMO ANTI-DÉCISION HÂTIVE ===== -->
+  <div class="memo">
+    <div class="memo-head">
+      <span class="stop">À lire avant de cliquer</span>
+      <h2>Mémo — les 8 questions</h2>
+    </div>
+    <p class="intro">Quand l'envie d'agir monte — un titre s'envole, un autre s'effondre, une idée neuve te démange — passe cette liste. Si une seule réponse coince, <b>tu ne passes pas l'ordre aujourd'hui.</b> Rien n'est jamais aussi urgent que ça en a l'air.</p>
+
+    <ul class="checks" id="checks">
+      <li><span class="box"></span><div><div class="q">Mon filet de 6 000 € est-il plein ?</div><div class="why">Si non, l'argent va au Livret A. Pas de bourse avant la sécurité.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Cette ligne est-elle dans ma grille ?</div><div class="why">Si le nom n'y figure pas, c'est une impulsion, pas une conviction.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Sa case est-elle déjà prise ?</div><div class="why">Un champion par thème et par enveloppe. Sinon je remplace, je n'empile pas.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Ai-je décidé ce seuil à froid ?</div><div class="why">Un prix fixé avant la publication, pas dans l'euphorie ou la panique du jour J.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Le poids respecte-t-il mon cadre ?</div><div class="why">Pilier 5-10 % · Satellite 2-4 % · Pari 1-2 %. Microsoft plafond ~15 %.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Est-ce que j'agis, ou est-ce que je réagis ?</div><div class="why">Une hausse qui fait peur de « rater », une baisse qui fait peur de « perdre » — les deux sont de mauvaises raisons.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Serais-je à l'aise si ça baissait de 30 % demain ?</div><div class="why">Si la réponse est non, la ligne est trop grosse ou la conviction trop faible.</div></div></li>
+      <li><span class="box"></span><div><div class="q">Puis-je attendre 48 h ?</div><div class="why">Si l'envie survit deux jours, c'est une décision. Si elle s'évapore, c'était une impulsion.</div></div></li>
+    </ul>
+
+    <button class="reset-btn" id="resetChecks">Réinitialiser la liste</button>
+
+    <div class="redflags">
+      <h4>⚑ SIGNAUX D'ALERTE — REPORTE L'ORDRE</h4>
+      <p>« Ça monte, je vais rater le train » · « Ça a tellement baissé, ça ne peut que remonter » · « Juste une petite ligne en plus, ça ne change rien » · « J'ai vu passer une news, il faut agir maintenant » · « Je vais moyenner à la baisse au-delà de mon enveloppe » · « Cette fois c'est différent ».</p>
+    </div>
+
+    <div class="memo-foot">
+      <b>La règle des 45 lignes.</b> Tu es déjà passé par là : suivre trop de dossiers a produit de la confusion, pas de la performance. Chaque nouvelle idée doit <em>remplacer</em> quelque chose, jamais s'ajouter. Le portefeuille se construit en profondeur, pas en largeur.
+    </div>
+  </div>
+
+  <!-- ===== 1. GRILLE ===== -->
+  <section id="grille">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <div>
+        <h2>La grille d'entreprises</h2>
+        <p class="sec-sub">Un champion par case. Clique un marqueur pour filtrer par niveau d'importance.</p>
+      </div>
+    </div>
+
+    <div class="legend" role="group" aria-label="Filtres par importance">
+      <button class="chip" data-filter="all" aria-pressed="true">Tout</button>
+      <button class="chip" data-filter="pilier" aria-pressed="false"><span class="dot pilier"></span>Pilier · 5–10 %</button>
+      <button class="chip" data-filter="sat" aria-pressed="false"><span class="dot sat"></span>Satellite · 2–4 %</button>
+      <button class="chip" data-filter="pari" aria-pressed="false"><span class="dot pari"></span>Pari spéculatif · 1–2 %</button>
+      <button class="chip" data-filter="etf" aria-pressed="false"><span class="dot etf"></span>ETF · base / assurance</button>
+    </div>
+
+    <div class="env-grid">
+      <!-- PEA -->
+      <div class="env">
+        <div class="env-title"><h3>PEA</h3><span>12 lignes · action entière</span></div>
+        <ul class="lines">
+          <li class="line" data-lvl="etf"><span class="marker etf"></span><div class="line-body"><div class="line-name">ETF MSCI World (Amundi)</div><div class="line-case">Base</div><div class="line-note">Fondation, à nourrir en priorité. Fractionnable.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Hermès</div><div class="line-case">Luxe</div><div class="line-note">Qualité absolue.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">EssilorLuxottica</div><div class="line-case">Optique</div><div class="line-note">Métier distinct de Novo — pas un doublon santé.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Novo Nordisk <span class="held">détenue</span></div><div class="line-case">Santé</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">BNP Paribas</div><div class="line-case">Banque</div><div class="line-note">À racheter sur rechute.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">TotalEnergies <span class="held">détenue</span></div><div class="line-case">Énergie</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Veolia</div><div class="line-case">Déchets / eau</div><div class="line-note">Besoin structurel. Couvre déjà l'eau — rien à ajouter dessus.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Schneider Electric</div><div class="line-case">Équipement électrique</div><div class="line-note">Champion data centers. Legrand écartée (doublon).</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">GTT</div><div class="line-case">Infrastructure GNL</div><div class="line-note">Royalties méthaniers, quasi-monopole. Distinct de Total.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Thales</div><div class="line-case">Défense</div><div class="line-note">Conviction confirmée. Case défense, aucun doublon.</div></div></li>
+          <li class="line" data-lvl="sat"><span class="marker sat"></span><div class="line-body"><div class="line-name">Accor</div><div class="line-case">Tourisme</div><div class="line-note">Champion tourisme (Booking → opportunités).</div></div></li>
+          <li class="line" data-lvl="sat"><span class="marker sat"></span><div class="line-body"><div class="line-name">Amundi</div><div class="line-case">Gestion d'actifs</div><div class="line-note">Attendre un repli (proche du sommet).</div></div></li>
+        </ul>
+      </div>
+
+      <!-- CTO -->
+      <div class="env">
+        <div class="env-title"><h3>CTO</h3><span>11 lignes · fractionné possible</span></div>
+        <ul class="lines">
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Microsoft <span class="held">détenue</span></div><div class="line-case">Tech / IA — conviction n°1</div><div class="line-note">Cible ~10 %, plafond ~15 %. Ligne de renforcement prioritaire.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Visa</div><div class="line-case">Paiements</div><div class="line-note">Décorrélé de la tech.</div></div></li>
+          <li class="line" data-lvl="etf"><span class="marker etf"></span><div class="line-body"><div class="line-name">ETF MSCI World <span class="held">détenue</span></div><div class="line-case">Base CTO — surpondération assumée</div><div class="line-note">Gardée volontairement (choix personnel).</div></div></li>
+          <li class="line" data-lvl="etf"><span class="marker etf"></span><div class="line-body"><div class="line-name">Or physique (ETF)</div><div class="line-case">Assurance · ~5 %</div><div class="line-note">Choisi vs Rio. Décorrélé — protège quand les actions chutent. iShares/Amundi/Invesco Physical Gold.</div></div></li>
+          <li class="line" data-lvl="pilier"><span class="marker pilier"></span><div class="line-body"><div class="line-name">Alphabet <span class="held">détenue</span></div><div class="line-case">Tech / publicité-IA</div></div></li>
+          <li class="line" data-lvl="sat"><span class="marker sat"></span><div class="line-body"><div class="line-name">Amazon <span class="held">détenue</span></div><div class="line-case">Tech / cloud-e-commerce</div></div></li>
+          <li class="line" data-lvl="sat"><span class="marker sat"></span><div class="line-body"><div class="line-name">Netflix</div><div class="line-case">Média</div></div></li>
+          <li class="line" data-lvl="sat"><span class="marker sat"></span><div class="line-body"><div class="line-name">McDonald's</div><div class="line-case">Conso / restauration</div><div class="line-note">Champion conso défensive (un seul vs Pepsi/Coca).</div></div></li>
+          <li class="line" data-lvl="pari"><span class="marker pari"></span><div class="line-body"><div class="line-name">Nvidia <span class="held">détenue</span></div><div class="line-case">Pari IA pur</div><div class="line-note">Retenu vs ServiceNow (→ opportunités).</div></div></li>
+          <li class="line" data-lvl="pari"><span class="marker pari"></span><div class="line-body"><div class="line-name">Xiaomi</div><div class="line-case">Auto / Chine / EV</div><div class="line-note">Retenu vs BYD. Techno diversifiée + EV.</div></div></li>
+          <li class="line" data-lvl="pari"><span class="marker pari"></span><div class="line-body"><div class="line-name">SpaceX</div><div class="line-case">Spatial</div><div class="line-note">Leader retenu vs Rocket Lab. Attendre 6 août / lock-up déc.</div></div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Réserve d'opportunités -->
+    <div class="exclude" style="margin-top:1.25rem;background:#eef1f4;border-color:#dce2e8">
+      <h3 style="color:var(--steel)">◇ Réserve d'opportunités — achat seulement sur point d'entrée franc <span style="font-size:.7rem;color:var(--faint);font-weight:400;text-transform:none;letter-spacing:0">(éditable · clique pour modifier)</span></h3>
+      <p style="color:#4d5a67" class="editable-block" contenteditable="true" data-key="reserve_txt">Non suivies au quotidien. On les prend uniquement si une vraie fenêtre s'ouvre : ServiceNow · Uber · Booking (Accor couvre déjà le tourisme) · Rio Tinto · Rocket Lab (SpaceX est le champion spatial) · Strategy (levier BTC, &lt;3 % si repris) · Moderna · Pepsi/Coca · Amundi renfort. Toute autre ancienne ligne rejoint aussi cette réserve.</p>
+    </div>
+
+    <div class="exclude" style="margin-top:1rem">
+      <h3>× Définitivement écartées — doublons</h3>
+      <p><span class="x">×</span> LVMH (Hermès) · <span class="x">×</span> Roche / Regeneron / Sanofi (Novo) · <span class="x">×</span> Oracle / Broadcom / Nebius (empilement tech) · <span class="x">×</span> Legrand (Schneider) · <span class="x">×</span> Ferrari / BYD (choix EV = Xiaomi) · <span class="x">×</span> Soitec (trop volatil) · <span class="x">×</span> Adyen (Visa) · <span class="x">×</span> Mastercard (Visa) · <span class="x">×</span> Havas / Orange · <span class="x">×</span> 2CRSI / Circle · <span class="x">×</span> Interactive Brokers (Amundi) · <span class="x">×</span> Realty Income · <span class="x">×</span> Nvidia doublon ServiceNow.</p>
+    </div>
+  </section>
+
+  <!-- ===== 2. STRATÉGIES ===== -->
+  <section id="strategies">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <div>
+        <h2>Trois stratégies pour 600 € / mois</h2>
+        <p class="sec-sub">Flux automatique sur ce qui est fractionnable (World PEA + CTO). Poche cash pour les actions entières du PEA et les opportunités.</p>
+      </div>
+    </div>
+
+    <div class="strats">
+      <div class="strat">
+        <h3>Socle d'abord</h3>
+        <div class="kind">prudente</div>
+        <ul class="alloc">
+          <li><span class="lbl">World PEA</span><span class="val">250 €</span></li>
+          <li><span class="lbl">Microsoft (CTO)</span><span class="val">100 €</span></li>
+          <li class="cash"><span class="lbl">Poche cash</span><span class="val">250 €</span></li>
+          <li class="total"><span class="lbl">Total</span><span class="val">600 €</span></li>
+        </ul>
+        <p class="verdict">Base très robuste, tech mesurée. Le PEA-actions se remplit tranquillement via le cash.</p>
+      </div>
+
+      <div class="strat reco">
+        <span class="tag">Recommandée</span>
+        <h3>Équilibrée</h3>
+        <div class="kind">les trois étages</div>
+        <ul class="alloc">
+          <li><span class="lbl">World PEA</span><span class="val">200 €</span></li>
+          <li><span class="lbl">Microsoft (CTO)</span><span class="val">100 €</span></li>
+          <li><span class="lbl">Rotation satellite CTO</span><span class="val">50 €</span></li>
+          <li class="cash"><span class="lbl">Poche cash</span><span class="val">250 €</span></li>
+          <li class="total"><span class="lbl">Total</span><span class="val">600 €</span></li>
+        </ul>
+        <p class="verdict"><b>Base + conviction + diversification souple + réactivité.</b> Le meilleur compromis avec ta contrainte PEA.</p>
+      </div>
+
+      <div class="strat">
+        <h3>Convictions en avant</h3>
+        <div class="kind">offensive</div>
+        <ul class="alloc">
+          <li><span class="lbl">World PEA</span><span class="val">150 €</span></li>
+          <li><span class="lbl">Microsoft (CTO)</span><span class="val">120 €</span></li>
+          <li><span class="lbl">2 satellites CTO</span><span class="val">100 €</span></li>
+          <li class="cash"><span class="lbl">Poche cash</span><span class="val">230 €</span></li>
+          <li class="total"><span class="lbl">Total</span><span class="val">600 €</span></li>
+        </ul>
+        <p class="verdict">Croissance CTO poussée. Base plus légère, volatilité assumée.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>Mécanique clé.</b> Tes actions PEA (Thales ~216 €, Schneider ~230 €, Hermès ~1 600 €, BNP…) ne se font pas en mensualités fixes : tu <b>accumules du cash et achètes 1 action entière</b> quand le montant est atteint et le niveau te plaît. Les moins chères (Veolia, Total) se prennent vite, les grosses par patience.</p>
+    </div>
+  </section>
+
+  <!-- ===== 3. À SOLDER ===== -->
+  <section id="solder">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <div>
+        <h2>Lignes à solder</h2>
+        <p class="sec-sub">Entreprises intéressantes mais hors de ta stratégie resserrée. Le piège : « je vends dès que ça remonte » qui devient « ça n'est jamais remonté ». Fixe un seuil <em>et</em> une date limite pour chacune.</p>
+      </div>
+    </div>
+
+    <div class="queue" id="solderList">
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">Take-Two</div><div class="qcash">jeux vidéo · CTO · PV</div></div>
+        <div class="qbody">
+          <div class="qdesc">Ligne en plus-value → flat tax 30 % sur le gain, mais payer l'impôt = avoir gagné. Catalyseur GTA crédible ; date butoir quand même.</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_tt_seuil" placeholder="ex. 240 $"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_tt_date" placeholder="ex. sortie GTA"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_tt_why" placeholder="le catalyseur qui valide/invalide la thèse"></label>
+          </div>
+        </div>
+      </div>
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">Pernod Ricard</div><div class="qcash">spiritueux · PEA</div></div>
+        <div class="qbody">
+          <div class="qdesc">Seuil décidé à froid, avant la publication. Produit → filet Livret A.</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_pr_seuil" placeholder="ex. 70 €"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_pr_date" placeholder="après résultats août"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_pr_why" placeholder="résultats = confirmation/infirmation"></label>
+          </div>
+        </div>
+      </div>
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">Bouygues</div><div class="qcash">conglomérat · PEA</div></div>
+        <div class="qbody">
+          <div class="qdesc">Malgré l'intérêt du conglomérat, hors stratégie resserrée.</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_by_seuil" placeholder="prix"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_by_date" placeholder="prochain trimestre"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_by_why" placeholder="catalyseur"></label>
+          </div>
+        </div>
+      </div>
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">Saint-Gobain</div><div class="qcash">matériaux · PEA</div></div>
+        <div class="qbody">
+          <div class="qdesc">Bonne entreprise, mais pas retenue dans la grille.</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_sg_seuil" placeholder="prix"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_sg_date" placeholder="prochain trimestre"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_sg_why" placeholder="catalyseur"></label>
+          </div>
+        </div>
+      </div>
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">BMW</div><div class="qcash">auto · PEA</div></div>
+        <div class="qbody">
+          <div class="qdesc">Case auto désormais couverte par Xiaomi (CTO).</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_bmw_seuil" placeholder="prix"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_bmw_date" placeholder="prochain trimestre"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_bmw_why" placeholder="catalyseur"></label>
+          </div>
+        </div>
+      </div>
+      <div class="qrow solder-row">
+        <div class="solder-name"><div class="qmonth" style="color:var(--clay)">Intesa Sanpaolo</div><div class="qcash">banque · PEA</div></div>
+        <div class="qbody">
+          <div class="qdesc">Recoupe BNP (ton champion banque).</div>
+          <div class="solder-fields">
+            <label>Seuil <input type="text" class="fld editable" data-key="s_isp_seuil" placeholder="prix"></label>
+            <label>Date butoir <input type="text" class="fld editable" data-key="s_isp_date" placeholder="prochain trimestre"></label>
+            <label class="wide">Pourquoi cette date <input type="text" class="fld editable" data-key="s_isp_why" placeholder="catalyseur"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>Régler une date butoir — le mode d'emploi.</b> Adosse-la à un <b>catalyseur</b> (résultats, sortie produit), pas au calendrier nu. Horizon 3–6 mois. Le jour J, une seule question : « si je n'avais pas cette ligne, je l'achèterais à ce prix ? » — non → je vends, oui → ce n'est plus une ligne à solder. <b>La date ne se repousse pas</b> : la décaler « encore un peu » est le signal qu'on est passé de la décision à l'espoir.</p>
+    </div>
+  </section>
+
+  <!-- ===== 4. CATALYSEURS ===== -->
+  <section id="catalyseurs">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <div>
+        <h2>Catalyseurs à ne pas manquer</h2>
+        <p class="sec-sub">Été–automne 2026. Décide ton seuil <em>avant</em> chaque publication pour éviter la décision émotionnelle du jour J.</p>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-date">29 JUIL</div><div class="tl-title">Hermès — résultats</div><div class="tl-desc">Catalyseur luxe (ton pilier PEA). Rio Tinto publie aussi (opportunité, pas ligne suivie).</div></div>
+      <div class="tl-item"><div class="tl-date">~5 AOÛT</div><div class="tl-title">Novo Nordisk — résultats</div><div class="tl-desc">Visibilité sur la décote. Renfort possible si le niveau est bon.</div></div>
+      <div class="tl-item"><div class="tl-date">~6 AOÛT</div><div class="tl-title">SpaceX — 1er trimestre coté</div><div class="tl-desc">Première vraie base de valorisation depuis l'IPO.</div></div>
+      <div class="tl-item sell"><div class="tl-date">AOÛT</div><div class="tl-title">Pernod Ricard — arbitrage de vente</div><div class="tl-desc">Seuil à fixer à l'avance. Produit → filet Livret A.</div></div>
+      <div class="tl-item sell"><div class="tl-date">À FIXER</div><div class="tl-title">Take-Two — vente sur remontée</div><div class="tl-desc">Seuil + date limite. Ne pas rester prisonnier de l'espoir de reprise.</div></div>
+      <div class="tl-item"><div class="tl-date">~26 AOÛT</div><div class="tl-title">Xiaomi — résultats</div><div class="tl-desc">Ta case auto/EV. Surveiller l'exécution du pari automobile (SU7).</div></div>
+      <div class="tl-item watch"><div class="tl-date">AUTOMNE</div><div class="tl-title">Accor — résultats trimestriels</div><div class="tl-desc">Confirmation du momentum tourisme.</div></div>
+      <div class="tl-item watch"><div class="tl-date">DÉCEMBRE</div><div class="tl-title">SpaceX — fin du lock-up</div><div class="tl-desc">Afflux possible de ventes d'initiés → point d'entrée potentiel.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 5. LIVRET A ===== -->
+  <section id="livret">
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <div>
+        <h2>Filet de sécurité — Livret A</h2>
+        <p class="sec-sub">Objectif 6 000 € de liquidités disponibles. Priorité assumée : mieux vaut un sprint court et net qu'une pause floue. Ce coussin protège tes actions d'une vente forcée pendant ta transition pro.</p>
+      </div>
+    </div>
+
+    <div class="netgrid">
+      <div class="progress-card">
+        <div class="progress-top">
+          <div class="now"><input type="number" id="netNow" class="num-inline" value="1300" min="0" step="50"> € <span style="font-size:1rem;color:var(--faint);font-family:'JetBrains Mono',monospace">/ <input type="number" id="netGoal" class="num-inline" value="6000" min="0" step="500"> €</span></div>
+          <div class="goal" id="netRest">reste ~4 700 €</div>
+        </div>
+        <div class="bar">
+          <div class="bar-fill" id="netBar"></div>
+        </div>
+        <div class="bar-labels"><span>0 €</span><span id="netPct">21,7 % du chemin</span></div>
+        <p style="font-size:.86rem;color:var(--muted);margin-top:1rem">À <b><span id="netRate">500</span> €/mois</b>, le filet est comblé en <b><span id="netMonths">~9-10</span> mois</b>. La poche cash existante (coussin BTC ~240 € + vente Pernod en août) peut être <b>versée directement sur le Livret A</b> pour gagner presque un mois — la sécurité passe avant le guet d'un point d'entrée.</p>
+      </div>
+
+      <div class="net-detail">
+        <span class="phase-tag p1">Phase 1 · sprint</span>
+        <h3>Répartition des 600 € <span style="font-size:.7rem;color:var(--faint);font-weight:400">(modifiable)</span></h3>
+        <div class="split">
+          <div class="split-part a"><span class="amt"><input type="number" id="splitA" class="num-inline" value="500" min="0" step="50">&nbsp;€</span><span class="who">Livret A / mois</span></div>
+          <div class="split-part b"><span class="amt"><input type="number" id="splitB" class="num-inline" value="100" min="0" step="50">&nbsp;€</span><span class="who">World PEA / mois</span></div>
+        </div>
+        <p>On garde un petit flux bourse pour <b>ne pas casser le rythme du DCA</b> — la base World continue de tourner. Tout le reste part sur la sécurité.</p>
+        <hr style="border:none;border-top:1px dashed var(--line-soft);margin:1rem 0">
+        <span class="phase-tag p2">Phase 2 · filet plein</span>
+        <p>Retour à ta stratégie d'investissement pleine (600 €/mois réalloués, poche cash reconstituée). Filet sécurisé, investissement l'esprit tranquille.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>Option accélérée (selon ton confort).</b> Si le manque de sécurité te pèse, monte le Livret A à <b>550-600 €/mois</b> et suspends la bourse quelques mois → filet bouclé en ~7-8 mois. Le 500/100 reste le meilleur équilibre si tu supportes bien ; l'arbitrage est une question de sommeil, pas de maths.</p>
+    </div>
+  </section>
+
+  <!-- ===== 6. NOTE ACWI ===== -->
+  <section id="acwi">
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <div>
+        <h2>Note — faut-il un ETF ACWI ?</h2>
+        <p class="sec-sub">L'ACWI (All Country World Index) regroupe pays développés + émergents dans un seul support (~85 % World / ~15 % émergents).</p>
+      </div>
+    </div>
+
+    <div class="acwi">
+      <div class="acwi-head">
+        <h3>ACWI tout-en-un</h3>
+        <span class="verdict-pill">Pas adapté à ton cas</span>
+      </div>
+      <div class="acwi-body">
+        <p style="font-size:.92rem;color:var(--ink)">Excellent produit — mais pour quelqu'un qui <b>part de zéro</b>. Toi, tu détiens déjà un World (PEA) + un World (CTO, 2 parts). Ajouter un ACWI <b>re-superpose ~85 % de World que tu as déjà</b> : tu ne captes vraiment en neuf que sa poche émergente (15 %), en dupliquant tout le reste. C'est le piège du double World, en pire.</p>
+        <div class="acwi-cols">
+          <div class="acwi-col pro">
+            <h4>✓ Là où l'ACWI brille</h4>
+            <p>Un portefeuille neuf : une seule ligne, couverture mondiale complète, aucun ratio à gérer soi-même. Simplicité maximale.</p>
+          </div>
+          <div class="acwi-col con">
+            <h4>✗ Pourquoi pas chez toi</h4>
+            <p>Superposition avec tes deux World existants. Tu perds le contrôle de ton ratio choisi (85/15) et tu dupliques ta base au lieu de la compléter.</p>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:1.2rem">
+          <p><b>Ta voie reste World + MSCI EM séparés.</b> Tu gardes la main sur le ratio 85/15, tu ajoutes seulement la brique manquante (émergents, IE00BKM4GZ66) quand ta poche World CTO aura grossi — sans jamais racheter du World que tu détiens déjà.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. DISCIPLINE ===== -->
+  <section id="discipline">
+    <div class="sec-head">
+      <span class="sec-num">07</span>
+      <div>
+        <h2>Les trois règles de discipline</h2>
+        <p class="sec-sub">L'analyse est faite. Le vrai travail maintenant, c'est l'exécution.</p>
+      </div>
+    </div>
+
+    <div class="rules">
+      <div class="rule"><div class="rn">1</div><h3>Sécurité d'abord, puis déployer</h3><p>Tant que le Livret A n'est pas à 6 000 €, le coussin BTC + Pernod va au filet, pas en bourse. Une fois le filet plein : agis sur les niveaux raisonnables — le point bas parfait n'existe pas, du cash qui dort = procrastination.</p></div>
+      <div class="rule"><div class="rn">2</div><h3>Un seuil décidé à froid</h3><p>Avant chaque résultat (Pernod à vendre, Novo/SpaceX à acheter), fixe ton niveau <em>avant</em> la publication. Ça neutralise l'émotion du jour J.</p></div>
+      <div class="rule"><div class="rn">3</div><h3>Élargir, puis épaissir</h3><p>Ouvre ~6 cases, puis renforce les piliers existants plutôt que d'ajouter des noms. C'est là qu'un portefeuille gagne en solidité — pas en multipliant les lignes.</p></div>
+    </div>
+
+    <div class="callout">
+      <p><b>Exposition IA — le garde-fou.</b> Microsoft (socle) + Alphabet + Amazon + Nvidia + la part d'IA de ton World bougent tous ensemble. Pour mesurer ton vrai risque IA, additionne-les — c'est un pari assumé et dimensionné, pas une diversification. Quand tu renforces, mets le gros sur Microsoft, pas sur les satellites.</p>
+    </div>
+
+    <div class="disclaimer">
+      Ce document structure tes propres choix issus de nos échanges ; ce ne sont pas des recommandations d'achat garanties. Les prix cités sont indicatifs et évoluent en continu — vérifie toujours le cours du jour et la disponibilité sur ton courtier avant de passer un ordre. Rien ici ne constitue un conseil en investissement personnalisé.
+    </div>
+
+    <footer>Cockpit d'investissement — révisé juillet 2026 · Filet 6 000 € → Base → Convictions → Paris</footer>
+  </section>
+
+</div>
+
+<div class="save-bar" id="saveBar">
+  <span id="saveMsg">✓ Enregistré sur cet appareil</span>
+  <button id="exportBtn" title="Télécharger une sauvegarde">⤓ Exporter</button>
+  <button id="importBtn" title="Charger une sauvegarde">⤒ Importer</button>
+  <button id="printBtn" title="Imprimer / PDF">🖶 PDF</button>
+  <button id="resetAll">Réinitialiser</button>
+</div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none">
+
+<button class="floating-save" id="floatingSave" title="Sauvegarder / exporter mes données">⤓ Sauvegarder</button>
+
+<script>
+  // Filtres de la grille
+  const chips = document.querySelectorAll('.chip');
+  const lines = document.querySelectorAll('li.line');
+  chips.forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      chips.forEach(c=>c.setAttribute('aria-pressed','false'));
+      chip.setAttribute('aria-pressed','true');
+      const f = chip.dataset.filter;
+      lines.forEach(li=>{
+        const show = (f==='all') || (li.dataset.lvl===f);
+        li.classList.toggle('hidden',!show);
+      });
+    });
+  });
+
+  // Mémo : checklist cochable
+  const checkItems = document.querySelectorAll('#checks li');
+  checkItems.forEach(li=>{
+    li.setAttribute('role','checkbox');
+    li.setAttribute('tabindex','0');
+    li.setAttribute('aria-checked','false');
+    const toggle = ()=>{
+      const done = li.classList.toggle('done');
+      li.setAttribute('aria-checked', done ? 'true' : 'false');
+    };
+    li.addEventListener('click', toggle);
+    li.addEventListener('keydown', e=>{
+      if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggle(); }
+    });
+  });
+  document.getElementById('resetChecks').addEventListener('click',()=>{
+    checkItems.forEach(li=>{
+      li.classList.remove('done');
+      li.setAttribute('aria-checked','false');
+    });
+  });
+
+  // ===== PERSISTANCE LOCALE (localStorage) =====
+  const STORE = 'suivi-portefeuille-v1';
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(STORE)) || {}; } catch(e){ data = {}; }
+
+  const saveBar = document.getElementById('saveBar');
+  let saveTimer;
+  function flashSaved(){
+    saveBar.classList.add('show');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>saveBar.classList.remove('show'), 1800);
+  }
+  function persist(){
+    try { localStorage.setItem(STORE, JSON.stringify(data)); flashSaved(); }
+    catch(e){ /* stockage indisponible */ }
+  }
+
+  // Champs input/text éditables (.editable + data-key)
+  document.querySelectorAll('.editable[data-key]').forEach(el=>{
+    const k = el.dataset.key;
+    if(data[k] !== undefined) el.value = data[k];
+    el.addEventListener('input',()=>{ data[k] = el.value; persist(); });
+  });
+
+  // Blocs contenteditable (.editable-block + data-key)
+  document.querySelectorAll('.editable-block[data-key]').forEach(el=>{
+    const k = el.dataset.key;
+    if(data[k] !== undefined) el.innerHTML = data[k];
+    el.addEventListener('blur',()=>{ data[k] = el.innerHTML; persist(); });
+  });
+
+  // ===== LIVRET A — réactivité =====
+  const netNow = document.getElementById('netNow');
+  const netGoal = document.getElementById('netGoal');
+  const netBar = document.getElementById('netBar');
+  const netRest = document.getElementById('netRest');
+  const netPct = document.getElementById('netPct');
+  const splitA = document.getElementById('splitA');
+  const netRate = document.getElementById('netRate');
+  const netMonths = document.getElementById('netMonths');
+
+  function fmt(n){ return Math.round(n).toLocaleString('fr-FR'); }
+  function refreshNet(){
+    const now = Math.max(0, parseFloat(netNow.value)||0);
+    const goal = Math.max(1, parseFloat(netGoal.value)||6000);
+    const rate = Math.max(0, parseFloat(splitA.value)||0);
+    const pct = Math.min(100, (now/goal)*100);
+    netBar.style.width = pct + '%';
+    const rest = Math.max(0, goal-now);
+    netRest.textContent = rest>0 ? ('reste ~'+fmt(rest)+' €') : '✓ filet complet';
+    netPct.textContent = fmt(pct).replace('.',',')+' % du chemin';
+    netRate.textContent = fmt(rate);
+    if(rate>0 && rest>0){
+      const m = Math.ceil(rest/rate);
+      netMonths.textContent = '~'+m;
+    } else if(rest<=0){
+      netMonths.textContent = '0';
+    } else {
+      netMonths.textContent = '—';
+    }
+  }
+  [netNow,netGoal,splitA].forEach(inp=>{
+    if(inp) inp.addEventListener('input', refreshNet);
+  });
+  refreshNet();
+
+  // ===== RESET GLOBAL =====
+  document.getElementById('resetAll').addEventListener('click',()=>{
+    if(confirm('Réinitialiser toutes tes modifications (montants, seuils, dates, réserve) ? Cette action est définitive.')){
+      data = {};
+      try { localStorage.removeItem(STORE); } catch(e){}
+      location.reload();
+    }
+  });
+
+  // ===== EXPORT / IMPORT / IMPRESSION =====
+  // Rafraîchit data depuis le DOM avant export (au cas où un champ n'a pas encore déclenché input/blur)
+  function syncData(){
+    document.querySelectorAll('.editable[data-key]').forEach(el=>{ data[el.dataset.key]=el.value; });
+    document.querySelectorAll('.editable-block[data-key]').forEach(el=>{ data[el.dataset.key]=el.innerHTML; });
+    // checklist mémo
+    data.__checks = Array.from(document.querySelectorAll('#checks li')).map(li=>li.classList.contains('done'));
+  }
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  document.getElementById('exportBtn').addEventListener('click',()=>{
+    syncData();
+    const payload = { version:1, exportedAt:new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = url;
+    a.download = `suivi-portefeuille_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    saveBar.querySelector('#saveMsg').textContent = '⤓ Sauvegarde téléchargée';
+    flashSaved();
+    setTimeout(()=>{ saveBar.querySelector('#saveMsg').textContent='✓ Enregistré sur cet appareil'; }, 2000);
+  });
+
+  document.getElementById('importBtn').addEventListener('click',()=>{
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change',(e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const parsed = JSON.parse(reader.result);
+        const incoming = parsed.data || parsed;
+        if(typeof incoming!=='object') throw new Error('format');
+        data = incoming;
+        persist();
+        // ré-applique au DOM
+        document.querySelectorAll('.editable[data-key]').forEach(el=>{ if(data[el.dataset.key]!==undefined) el.value=data[el.dataset.key]; });
+        document.querySelectorAll('.editable-block[data-key]').forEach(el=>{ if(data[el.dataset.key]!==undefined) el.innerHTML=data[el.dataset.key]; });
+        if(Array.isArray(data.__checks)){
+          document.querySelectorAll('#checks li').forEach((li,i)=>{
+            const done = !!data.__checks[i];
+            li.classList.toggle('done',done);
+            li.setAttribute('aria-checked', done?'true':'false');
+          });
+        }
+        refreshNet();
+        alert('Sauvegarde importée avec succès.');
+      }catch(err){
+        alert('Fichier invalide — impossible de lire cette sauvegarde.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  });
+
+  document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+  // Bouton flottant → révèle la barre d'actions
+  const floatBtn = document.getElementById('floatingSave');
+  floatBtn.addEventListener('click',()=>{
+    syncData(); persist();
+    saveBar.classList.add('show');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>saveBar.classList.remove('show'), 4000);
+  });
+</script>
+</body>
+</html>
